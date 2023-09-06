@@ -22,18 +22,33 @@ namespace OpenWithCmdExt
             ContextMenuStrip menuStrip = new ContextMenuStrip();
 
             ToolStripMenuItem menuItem = new ToolStripMenuItem() { Text = "Open in Command prompt" };
-            menuItem.Click += OnClicked;
+
+            ToolStripMenuItem runAsUserItem = new ToolStripMenuItem() { Text = "As Current User" },
+                              runAsAdmin = new ToolStripMenuItem() { Text = "As Administrator" };
+
+            runAsUserItem.Click += (s, e) => { RunCMD(false); };
+            runAsAdmin.Click += (s, e) => { RunCMD(true); };
+
+            menuItem.DropDownItems.AddRange(new ToolStripItem[] {runAsUserItem, runAsAdmin});
 
             menuStrip.Items.Add(menuItem);
             return menuStrip;
         }
 
-        private void OnClicked(object sender, EventArgs e)
+        private void RunCMD(bool asadmin)
         {
             Process cmd = new Process();
-
             cmd.StartInfo.FileName = "cmd.exe";
-            cmd.StartInfo.WorkingDirectory = FolderPath;
+            
+            if(asadmin)
+            {
+                cmd.StartInfo.UseShellExecute = true;
+                cmd.StartInfo.Arguments = $"/k cd /d \"{FolderPath}\"";
+                cmd.StartInfo.Verb = "runas";
+            }
+            else {
+                cmd.StartInfo.WorkingDirectory = FolderPath;
+            }
 
             cmd.Start();
         }
