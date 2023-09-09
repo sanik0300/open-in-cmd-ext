@@ -3,6 +3,11 @@ using SharpShell.Attributes;
 using SharpShell.SharpContextMenu;
 using System;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Resources;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -12,6 +17,9 @@ namespace OpenWithCmdExt
     [COMServerAssociation(AssociationType.DirectoryBackground)]
     public class OpenWithCMD : SharpContextMenu
     {
+        static string pathToCmdExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"),
+                      admin_icon_res_name = Assembly.GetExecutingAssembly().GetManifestResourceNames().Where(x => x.EndsWith(".png")).First(); 
+
         protected override bool CanShowMenu()
         {
             return true;
@@ -21,10 +29,22 @@ namespace OpenWithCmdExt
         {
             ContextMenuStrip menuStrip = new ContextMenuStrip();
 
-            ToolStripMenuItem menuItem = new ToolStripMenuItem() { Text = "Open in Command prompt" };
+            ToolStripMenuItem menuItem = new ToolStripMenuItem() { Text = resources.StringTable.open_kw };
 
-            ToolStripMenuItem runAsUserItem = new ToolStripMenuItem() { Text = "As Current User" },
-                              runAsAdmin = new ToolStripMenuItem() { Text = "As Administrator" };
+            Icon cmdIcon = Icon.ExtractAssociatedIcon(pathToCmdExe);
+            menuItem.Image = cmdIcon.ToBitmap();
+            menuItem.ImageAlign = ContentAlignment.MiddleLeft;
+            menuItem.ImageScaling = ToolStripItemImageScaling.SizeToFit;
+
+            ToolStripMenuItem runAsUserItem = new ToolStripMenuItem() { Text = resources.StringTable.as_user },
+                              runAsAdmin = new ToolStripMenuItem() { Text = resources.StringTable.as_admin };
+
+            using(Stream str = Assembly.GetExecutingAssembly().GetManifestResourceStream(admin_icon_res_name))
+            {
+                runAsAdmin.Image = Image.FromStream(str);
+            }
+            runAsAdmin.ImageAlign = ContentAlignment.MiddleRight;
+            runAsAdmin.ImageScaling = ToolStripItemImageScaling.SizeToFit;
 
             runAsUserItem.Click += (s, e) => { RunCMD(false); };
             runAsAdmin.Click += (s, e) => { RunCMD(true); };
